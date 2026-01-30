@@ -20,14 +20,14 @@ export async function middleware(request: NextRequest) {
 
   const supabase = createServerClient(url, key, {
     cookies: {
-      get(name) {
+      get(name: string) {
         return request.cookies.get(name)?.value;
       },
-      set(name, value, options) {
+      set(name: string, value: string, options: any) {
         response.cookies.set({ name, value, ...options });
       },
-      remove(name, options) {
-        response.cookies.set({ name, value: "", ...options, maxAge: 0 });
+      remove(name: string, options: any) {
+        response.cookies.set({ name, value: "", ...options });
       },
     },
   });
@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
     const redirectUrl = new URL("/login", request.url);
     redirectUrl.searchParams.set(
       "next",
-      pathname + (searchParams.toString() ? `?${searchParams}` : "")
+      pathname + (searchParams.toString() ? `?${searchParams}` : ""),
     );
     return NextResponse.redirect(redirectUrl);
   }
