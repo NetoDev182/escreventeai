@@ -4,8 +4,9 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 
 const DEFAULT_N8N_URL = "http://localhost:5678/webhook-test/chat";
-const N8N_URL = process.env.N8N_WEBHOOK_URL?.trim() || DEFAULT_N8N_URL;
 const IS_PROD = process.env.NODE_ENV === "production";
+const ENV_N8N_URL = process.env.N8N_WEBHOOK_URL?.trim();
+const N8N_URL = ENV_N8N_URL || (IS_PROD ? "" : DEFAULT_N8N_URL);
 
 function cleanText(value: string) {
   const trimmed = value.trim();
@@ -99,13 +100,22 @@ async function callN8N(url: string, payload: any) {
 
 export async function POST(req: Request) {
   try {
+    if (!N8N_URL) {
+      return NextResponse.json(
+        {
+          answer:
+            "N8N_WEBHOOK_URL não configurado. Defina a variável no ambiente (ex.: Vercel).",
+        },
+        { status: 500 }
+      );
+    }
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (url && key) {
       const cookieStore = await cookies();
       const supabase = createServerClient(url, key, {
         cookies: {
-          get(name) {
+          get(name: string) {
             return cookieStore.get(name)?.value;
           },
           set() {},
